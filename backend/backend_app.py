@@ -206,6 +206,7 @@ try:
         "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
         "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_CERT_URL"),
         "client_x509_cert_url": os.getenv("GOOGLE_CLIENT_CERT_URL"),
+        "universe_domain":os.getenv("GOOGLE_UNIVERSE_DOMAIN")
     }
     credentials = service_account.Credentials.from_service_account_info(
         creds_dict, scopes=SCOPES
