@@ -1,4 +1,5 @@
 # backend_app.py
+import os
 from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -12,6 +13,8 @@ from datetime import datetime, timedelta, timezone
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
+
+
 # Instagram scraper module
 import instagram
 print(f"Instagram module loaded: {hasattr(instagram, 'get_exact_followers')}, PROFILE_URLS={getattr(instagram, 'PROFILE_URLS', None)}")
@@ -21,7 +24,7 @@ print(f"Instagram module loaded: {hasattr(instagram, 'get_exact_followers')}, PR
 # ------------------------------
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # ------------------------------
 # SQLite Visitor Tracking Setup
@@ -49,6 +52,7 @@ def init_db():
     """)
     db.commit()
     db.close()
+
 
 init_db()
 
@@ -78,9 +82,10 @@ def log_visitor():
     )
     if cur.fetchone() is None:
         db.execute(
-            "INSERT INTO visitors (ip_address, user_agent, timestamp) VALUES (?, ?, ?)",
-            (ip, ua, now.strftime("%Y-%m-%d %H:%M:%S"))
+        "INSERT INTO visitors (ip_address, user_agent, timestamp) VALUES (?, ?, ?)",
+        (ip, ua, now.strftime("%Y-%m-%d %H:%M:%S"))
         )
+
         db.commit()
         print(f"Visitor logged: {ip} - {ua} - {now}")
 
@@ -183,19 +188,33 @@ def login_info():
 # ------------------------------
 # Google Calendar API
 # ------------------------------
+
+
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-SERVICE_ACCOUNT_FILE = 'abstract-banner-469311-p3-1aed959a2771.json'
 
 service = None
 calendar_id = None
 try:
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES
+    creds_dict = {
+        "type": os.getenv("GOOGLE_TYPE"),
+        "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+        "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
+        "private_key": os.getenv("GOOGLE_PRIVATE_KEY", "").replace("\\n", "\n"),
+        "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
+        "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+        "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_CERT_URL"),
+        "client_x509_cert_url": os.getenv("GOOGLE_CLIENT_CERT_URL"),
+    }
+    credentials = service_account.Credentials.from_service_account_info(
+        creds_dict, scopes=SCOPES
     )
     service = build('calendar', 'v3', credentials=credentials)
     calendar_id = '5136fbf93c8a9abaa3882cdab4ec0e318f3ba5787d8818bcd91e4e667d7fd321@group.calendar.google.com'
 except Exception as e:
     print(f"Warning: Google Calendar service not initialized: {e}")
+
 
 @app.route('/events', methods=['GET'])
 def get_events():
@@ -253,4 +272,6 @@ def root():
 # Run App
 # ------------------------------
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=8000, debug=True)
+    # Local development: run directly
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port)
