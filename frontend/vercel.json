@@ -3,9 +3,7 @@
   "installCommand": "npm install",
   "framework": "vite",
   "nodeVersion": "18.x",
-  "outputDirectory": "dist"
-}
-{
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
@@ -13,3 +11,5 @@
     }
   ]
 }
+
+
