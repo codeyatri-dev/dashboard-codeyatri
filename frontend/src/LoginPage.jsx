@@ -25,9 +25,9 @@ const LoginPage = ({ onLogin }) => {
         >
           <div className="flex justify-center mb-8">
             <motion.img
-              whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-              transition={{ duration: 0.5 }}
-              src="https://www.codeyatri.space/assets/img/Logo-White.png"
+              whileHover={{ scale: 1.06 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              src="/logo.png"
               alt="CodeYatri"
               className="w-24 h-24 object-contain"
             />
@@ -78,3 +78,4 @@ const LoginPage = ({ onLogin }) => {
 };
 
 export default LoginPage;
+
